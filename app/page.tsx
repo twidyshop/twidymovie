@@ -2,10 +2,13 @@ import Hero from "@/components/Hero";
 import Section from "@/components/Section";
 import { getMovieTrending, getMovieHome, getAnimeLatest, getKomikLatest } from "@/lib/sansekai";
 
-export const revalidate = 900;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function Home() {
-  const [movies, trending, anime, komik] = await Promise.allSettled([getMovieHome(), getMovieTrending(), getAnimeLatest(), getKomikLatest()]);
+  const [movies, trending, anime, komik] = await Promise.allSettled([
+    getMovieHome(), getMovieTrending(), getAnimeLatest(), getKomikLatest()
+  ]);
   const movieItems = movies.status === "fulfilled" ? movies.value : [];
   const trendingItems = trending.status === "fulfilled" ? trending.value : [];
   const animeItems = anime.status === "fulfilled" ? anime.value : [];
