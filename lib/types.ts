@@ -1,0 +1,1 @@
+export type CardItem={id:string;title:string;image:string;href:string;meta?:string;raw?:any};
