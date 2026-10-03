@@ -19,11 +19,12 @@ const headers = {
   referer: "https://sansekai.my.id/"
 };
 
-export async function sansekai<T = any>(endpoint: string, revalidate = 900): Promise<T> {
+export async function sansekai<T = any>(endpoint: string, revalidate = 3600): Promise<T> {
   const path = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
   const response = await fetch(BASE_URL + path, {
     headers,
-    next: { revalidate }
+    next: { revalidate },
+    cache: "force-cache"
   });
 
   if (!response.ok) {
