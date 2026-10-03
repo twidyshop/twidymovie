@@ -1,7 +1,8 @@
 import Section from "@/components/Section";
 import { getMovieHome, getMovieTrending } from "@/lib/sansekai";
 
-export const revalidate = 900;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function MoviePage() {
   const [home, trending] = await Promise.allSettled([getMovieHome(), getMovieTrending()]);
