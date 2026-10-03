@@ -23,8 +23,7 @@ export async function sansekai<T = any>(endpoint: string, revalidate = 900): Pro
   const path = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
   const response = await fetch(BASE_URL + path, {
     headers,
-    next: { revalidate },
-    cache: "no-store"
+    next: { revalidate }
   });
 
   if (!response.ok) {
