@@ -15,8 +15,8 @@ export type CardItem = {
 
 const headers = {
   accept: "application/json, text/plain, */*",
-  "user-agent": "Mozilla/5.0 (compatible; TWYMOVIE/1.0)",
-  referer: "https://api.sansekai.my.id/"
+  "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+  referer: "https://sansekai.my.id/"
 };
 
 export async function sansekai<T = any>(endpoint: string, revalidate = 900): Promise<T> {
@@ -32,10 +32,12 @@ export async function sansekai<T = any>(endpoint: string, revalidate = 900): Pro
 
   const json = await response.json();
 
-  // Sansekai responses have changed shape between endpoints/versions.
-  // Keep the full payload when there is no explicit data wrapper.
-  if (json && typeof json === "object" && "data" in json) {
-    return json.data as T;
+  // Keep the API envelope's data payload when present. Some endpoints may
+  // return result/response instead, so preserve those too for normalization.
+  if (json && typeof json === "object") {
+    if (json.data !== undefined && json.data !== null) return json.data as T;
+    if (json.result !== undefined && json.result !== null) return json.result as T;
+    if (json.response !== undefined && json.response !== null) return json.response as T;
   }
   return json as T;
 }
@@ -193,7 +195,11 @@ function toCard(item: any, kind: "movie" | "anime" | "komik"): CardItem {
 
 async function content(endpoint: string, kind: "movie" | "anime" | "komik", revalidate = 900): Promise<CardItem[]> {
   const data = await sansekai(endpoint, revalidate);
-  return asArray(data)
+  const items = asArray(data);
+  if (!items.length) {
+    console.warn("[TWYMOVIE] Sansekai returned no content:", endpoint, JSON.stringify(data).slice(0, 1200));
+  }
+  return items
     .map((item) => {
       // Some section APIs wrap the actual subject in { subject: {...} }.
       const subject = item?.subject && typeof item.subject === "object" ? item.subject : item;
