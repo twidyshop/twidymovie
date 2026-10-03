@@ -1,7 +1,8 @@
 import Section from "@/components/Section";
 import { getKomikLatest, getKomikPopular } from "@/lib/sansekai";
 
-export const revalidate = 900;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function KomikPage() {
   const [latest, popular] = await Promise.allSettled([getKomikLatest(), getKomikPopular()]);
