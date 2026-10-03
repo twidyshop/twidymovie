@@ -54,41 +54,57 @@ function unwrap(value: any): any {
 
 function asArray(value: any): any[] {
   const root = unwrap(value);
-  if (Array.isArray(root)) return root;
-  if (!root || typeof root !== "object") return [];
-
   const preferred = [
     "list", "items", "results", "subjects", "subjectList", "movieList",
     "animeList", "komikList", "dataList", "contents", "records"
   ];
 
-  for (const key of preferred) {
-    if (Array.isArray(root[key])) return root[key];
-  }
+  const isCard = (item: any) =>
+    item && typeof item === "object" &&
+    !Array.isArray(item) &&
+    (item.subjectId || item.subject_id || item.id || item.url || item.slug ||
+      item.thumb || item.cover || item.poster || item.thumbnail || item.image);
 
-  // Homepage APIs often return sections such as:
-  // [{ title: "Trending", items: [...] }, ...]
-  for (const key of ["rows", "sections", "tabs", "categories"]) {
+  const flatten = (arr: any[]): any[] => {
+    // A direct list of content cards.
+    if (arr.some(isCard)) return arr.filter((x) => x && typeof x === "object");
+
+    // A list of homepage sections/wrappers. Extract their actual content.
+    const nested: any[] = [];
+    for (const row of arr) {
+      if (!row || typeof row !== "object") continue;
+      for (const key of preferred) {
+        if (Array.isArray(row[key])) nested.push(...flatten(row[key]));
+      }
+      if (Array.isArray(row.rows)) nested.push(...flatten(row.rows));
+      if (Array.isArray(row.sections)) nested.push(...flatten(row.sections));
+      if (row.subject && isCard(row.subject)) nested.push(row.subject);
+    }
+    return nested;
+  };
+
+  if (Array.isArray(root)) return flatten(root);
+  if (!root || typeof root !== "object") return [];
+
+  for (const key of preferred) {
     if (Array.isArray(root[key])) {
-      const nested = root[key].flatMap((row: any) => {
-        if (Array.isArray(row)) return row;
-        if (!row || typeof row !== "object") return [];
-        for (const k of preferred) if (Array.isArray(row[k])) return row[k];
-        return [];
-      });
-      if (nested.length) return nested;
+      const found = flatten(root[key]);
+      if (found.length) return found;
     }
   }
 
-  // Last-resort recursive search, limited to shallow API containers so
-  // metadata objects do not become fake content cards.
-  for (const value of Object.values(root)) {
-    if (Array.isArray(value) && value.length && value.some((x) => x && typeof x === "object")) {
-      const usable = value.filter((x: any) =>
-        x && typeof x === "object" &&
-        (x.title || x.name || x.subjectId || x.id || x.url || x.slug)
-      );
-      if (usable.length) return usable;
+  for (const key of ["rows", "sections", "tabs", "categories"]) {
+    if (Array.isArray(root[key])) {
+      const found = flatten(root[key]);
+      if (found.length) return found;
+    }
+  }
+
+  // Last-resort search through shallow containers.
+  for (const nested of Object.values(root)) {
+    if (Array.isArray(nested)) {
+      const found = flatten(nested);
+      if (found.length) return found;
     }
   }
 
