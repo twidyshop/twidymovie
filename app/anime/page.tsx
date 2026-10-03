@@ -1,7 +1,8 @@
 import Section from "@/components/Section";
 import { getAnimeLatest, getAnimeRecommended } from "@/lib/sansekai";
 
-export const revalidate = 900;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function AnimePage() {
   const [latest, recommended] = await Promise.allSettled([getAnimeLatest(), getAnimeRecommended()]);
