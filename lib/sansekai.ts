@@ -256,11 +256,36 @@ export async function searchAll(query: string) {
 }
 
 export async function getMovieDetail(url: string) {
-  return sansekai(`/moviebox/detail?url=${encodeURIComponent(url)}`, 300);
+  const value = url.trim();
+  try {
+    return await sansekai(`/moviebox/detail?url=${encodeURIComponent(value)}`, 300);
+  } catch (firstError) {
+    // Some MovieBox responses expose subjectId instead of a canonical URL.
+    // Retry with subjectId so cards remain playable across both response shapes.
+    if (/^\\d+$/.test(value)) {
+      return sansekai(`/moviebox/detail?subjectId=${encodeURIComponent(value)}`, 300);
+    }
+    throw firstError;
+  }
 }
 
 export async function getMovieSources(url: string) {
-  return sansekai(`/moviebox/sources?url=${encodeURIComponent(url)}`, 120);
+  const value = url.trim();
+  try {
+    return await sansekai(`/moviebox/sources?url=${encodeURIComponent(value)}`, 120);
+  } catch (firstError) {
+    try {
+      return await sansekai(`/moviebox/generate-link-stream-video?url=${encodeURIComponent(value)}`, 60);
+    } catch {
+      if (/^\\d+$/.test(value)) {
+        try {
+          return await sansekai(`/moviebox/sources?subjectId=${encodeURIComponent(value)}`, 120);
+        } catch {}
+        return sansekai(`/moviebox/generate-link-stream-video?subjectId=${encodeURIComponent(value)}`, 60);
+      }
+      throw firstError;
+    }
+  }
 }
 
 export async function getAnimeDetail(url: string) {
