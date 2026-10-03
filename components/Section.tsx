@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import ContentCard from "./ContentCard";
-import type { CardItem } from "@/lib/sansekai";
+import type { CardItem } from "@/lib/types";
 
 export default function Section({ title, items, href }: { title: string; items: CardItem[]; href?: string }) {
   if (!items.length) return null;
